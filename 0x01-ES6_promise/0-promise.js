@@ -1,5 +1,3 @@
-/* jshint esversion: 6 */
-function getResponseFromAPI() {
-    return new Promise(() => {});
-  }
-  module.exports = getResponseFromAPI;
+export default function getResponseFromAPI() {
+  return new Promise(() => {});
+}
