@@ -14,13 +14,13 @@ describe('getPaymentTokenFromAPI', () => {
       });
   });
 
-  it('should not resolve when success is false', (done) => {
+  it('should reject with an error when success is false', (done) => {
     getPaymentTokenFromAPI(false)
       .then(() => {
         done(new Error('Expected promise to be rejected, but it was resolved'));
       })
-      .catch(() => {
-        // As expected, the promise should be rejected when success is false
+      .catch((error) => {
+        assert.strictEqual(error.message, 'Unsuccessful response from the API');
         done();
       });
   });
