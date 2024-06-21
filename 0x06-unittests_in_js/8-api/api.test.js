@@ -1,33 +1,15 @@
 // api.test.js
-const chai = require('chai');
-const axios = require('axios');
-const { expect } = chai;
-const app = require('./api'); // Import the app from api.js
+const request = require('request');
+const { expect } = require('chai');
 
-const PORT = 7865;
-const BASE_URL = `http://localhost:${PORT}`;
+describe('API integration test', () => {
+  const API_URL = 'http://localhost:7865';
 
-let server;
-
-// Start the server before running tests
-before((done) => {
-  server = app.listen(PORT, done);
-});
-
-// Close the server after running tests
-after((done) => {
-  server.close(done);
-});
-
-describe('Index page', () => {
-  it('Correct status code', async () => {
-    const response = await axios.get(`${BASE_URL}/`);
-    expect(response.status).to.equal(200);
-  });
-
-  it('Correct result', async () => {
-    const response = await axios.get(`${BASE_URL}/`);
-    expect(response.data).to.equal('Welcome to the payment system');
+  it('GET / returns correct response', (done) => {
+    request.get(`${API_URL}/`, (_err, res, body) => {
+      expect(res.statusCode).to.be.equal(200);
+      expect(body).to.be.equal('Welcome to the payment system');
+      done();
+    });
   });
 });
-

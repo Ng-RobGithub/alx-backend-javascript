@@ -1,10 +1,10 @@
 // api.js
 const express = require('express');
-const app = express();
 
+const app = express();
 const PORT = 7865;
 
-app.get('/', (req, res) => {
+app.get('/', (_, res) => {
   res.send('Welcome to the payment system');
 });
 

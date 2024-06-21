@@ -4,18 +4,17 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-      "test": "mocha api.test.js"
+        "test": "./node_modules/mocha/bin/mocha"
     },
     "author": "",
     "license": "ISC",
     "dependencies": {
-      "express": "^4.17.1"
+        "express": "^4.17.1"
     },
     "devDependencies": {
-      "chai": "^4.2.0",
-      "mocha": "^6.2.2",
-      "sinon": "^7.5.0",
-      "axios": "^0.21.1"
+        "chai": "^4.2.0",
+        "mocha": "^10.4.0",
+        "request": "^2.88.0",
+        "sinon": "^7.5.0"
     }
-  }
-  
+}
