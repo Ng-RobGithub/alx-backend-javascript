@@ -1,68 +1,28 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
-
+const students = require('./3-read_file_async'); // Ensure this file exports the function properly
 const app = express();
+const hostname = '127.0.0.1';
 const port = 1245;
 
 app.get('/', (req, res) => {
-  res.send('Hello Holberton School!');
+  res.status(200).send('Hello Holberton School!');
 });
 
-app.get('/students', (req, res) => {
-  const database = process.argv[2];
-
-  if (!database) {
-    res.send('This is the list of our students\n');
-    return;
+app.get('/students', async (req, res) => {
+  try {
+    res.setHeader('Content-Type', 'text/plain');
+    res.write('This is the list of our students\n');
+    const data = await students(process.argv[2]);
+    res.write(`Number of students: ${data.students.length}\n`);
+    res.write(`Number of students in CS: ${data.csStudents.length}. List: ${data.csStudents.join(', ')}\n`);
+    res.write(`Number of students in SWE: ${data.sweStudents.length}. List: ${data.sweStudents.join(', ')}\n`);
+  } catch (err) {
+    res.write(err.message);
+  } finally {
+    res.end();
   }
-
-  const filePath = path.resolve(database);
-  readDatabase(filePath)
-    .then((report) => {
-      res.send(`This is the list of our students\n${report}`);
-    })
-    .catch((error) => {
-      res.send(`This is the list of our students\n${error.message}`);
-    });
 });
 
-function readDatabase(filePath) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(filePath, 'utf-8', (err, data) => {
-      if (err) {
-        reject(new Error('Cannot load the database'));
-        return;
-      }
-
-      const lines = data.split('\n').filter((line) => line);
-      const students = {};
-      let totalStudents = 0;
-
-      for (const line of lines) {
-        if (line.trim()) {
-          const [firstName, field] = line.split(',');
-          if (students[field]) {
-            students[field].push(firstName);
-          } else {
-            students[field] = [firstName];
-          }
-          totalStudents += 1;
-        }
-      }
-
-      let report = `Number of students: ${totalStudents}\n`;
-      for (const [field, names] of Object.entries(students)) {
-        report += `Number of students in ${field}: ${names.length}. List: ${names.join(', ')}\n`;
-      }
-
-      resolve(report.trim());
-    });
-  });
-}
-
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+app.listen(port, hostname, () => {
+  console.log(`Server running at http://${hostname}:${port}`);
 });
-
-module.exports = app;
