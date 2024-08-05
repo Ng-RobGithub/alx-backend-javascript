@@ -1,21 +1,20 @@
 const express = require('express');
-const students = require('./3-read_file_async'); // Ensure this file exports the function properly
+const students = require('./3-read_file_async'); // Ensure 3-read_file_async.js exports a function that reads the CSV file and returns a promise
 const app = express();
 const hostname = '127.0.0.1';
 const port = 1245;
 
 app.get('/', (req, res) => {
-  res.status(200).send('Hello Holberton School!');
+  res.send('Hello Holberton School!');
 });
 
 app.get('/students', async (req, res) => {
+  res.write('This is the list of our students\n');
   try {
-    res.setHeader('Content-Type', 'text/plain');
-    res.write('This is the list of our students\n');
     const data = await students(process.argv[2]);
     res.write(`Number of students: ${data.students.length}\n`);
     res.write(`Number of students in CS: ${data.csStudents.length}. List: ${data.csStudents.join(', ')}\n`);
-    res.write(`Number of students in SWE: ${data.sweStudents.length}. List: ${data.sweStudents.join(', ')}\n`);
+    res.write(`Number of students in SWE: ${data.sweStudents.length}. List: ${data.sweStudents.join(', ')}`);
   } catch (err) {
     res.write(err.message);
   } finally {
@@ -24,5 +23,5 @@ app.get('/students', async (req, res) => {
 });
 
 app.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}`);
+  console.log(`Server running at http://${hostname}:${port}/`);
 });
