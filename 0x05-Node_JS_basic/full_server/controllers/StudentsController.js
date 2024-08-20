@@ -1,75 +1,47 @@
-// full_server/controllers/StudentsController.js
-import readDatabase from '../utils';
+import { readDatabase } from '../utils.js';
 
 /**
- * The list of supported majors.
- */
-const VALID_MAJORS = ['CS', 'SWE'];
-
-/**
- * Contains the student-related route handlers.
- * @author: Ngozi Rob Agomuonso <https://github.com/Ng-RobGithub>
+ * Controller for handling students-related requests.
+ * @author Ng-Rob Agomuonso <https://github.com/Ng-RobGithub>
  */
 class StudentsController {
-  static getAllStudents(request, response) {
-    const dataPath = process.argv.length > 2 ? process.argv[2] : '';
+  static getAllStudents(req, res) {
+    const databaseFile = process.argv[2];
 
-    readDatabase(dataPath)
-      .then((studentGroups) => {
-        const responseParts = ['This is the list of our students'];
-        // A comparison function for ordering a list of strings in ascending
-        // order by alphabetic order and case insensitive
-        const cmpFxn = (a, b) => {
-          if (a[0].toLowerCase() < b[0].toLowerCase()) {
-            return -1;
-          }
-          if (a[0].toLowerCase() > b[0].toLowerCase()) {
-            return 1;
-          }
-          return 0;
-        };
-
-        for (const [field, group] of Object.entries(studentGroups).sort(cmpFxn)) {
-          responseParts.push([
-            `Number of students in ${field}: ${group.length}.`,
-            'List:',
-            group.map((student) => student.firstname).join(', '),
-          ].join(' '));
-        }
-        response.status(200).send(responseParts.join('\n'));
+    readDatabase(databaseFile)
+      .then((students) => {
+        let responseText = 'This is the list of our students';
+        Object.keys(students).sort().forEach(field => {
+          const list = students[field].join(', ');
+          responseText += `\nNumber of students in ${field}: ${students[field].length}. List: ${list}`;
+        });
+        res.status(200).send(responseText);
       })
-      .catch((err) => {
-        response
-          .status(500)
-          .send(err instanceof Error ? err.message : err.toString());
+      .catch((error) => {
+        res.status(500).send('Cannot load the database');
       });
   }
 
-  static getAllStudentsByMajor(request, response) {
-    const dataPath = process.argv.length > 2 ? process.argv[2] : '';
-    const { major } = request.params;
-
-    if (!VALID_MAJORS.includes(major)) {
-      response.status(500).send('Major parameter must be CS or SWE');
+  static getAllStudentsByMajor(req, res) {
+    const { major } = req.params;
+    const validMajors = ['CS', 'SWE'];
+    
+    if (!validMajors.includes(major)) {
+      res.status(500).send('Major parameter must be CS or SWE');
       return;
     }
-    readDatabase(dataPath)
-      .then((studentGroups) => {
-        let responseText = '';
 
-        if (Object.keys(studentGroups).includes(major)) {
-          const group = studentGroups[major];
-          responseText = `List: ${group.map((student) => student.firstname).join(', ')}`;
-        }
-        response.status(200).send(responseText);
+    const databaseFile = process.argv[2];
+
+    readDatabase(databaseFile)
+      .then((students) => {
+        const list = students[major].join(', ');
+        res.status(200).send(`List: ${list}`);
       })
-      .catch((err) => {
-        response
-          .status(500)
-          .send(err instanceof Error ? err.message : err.toString());
+      .catch((error) => {
+        res.status(500).send('Cannot load the database');
       });
   }
 }
 
 export default StudentsController;
-module.exports = StudentsController;
