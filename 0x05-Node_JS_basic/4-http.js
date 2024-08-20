@@ -1,15 +1,20 @@
 const http = require('http');
 
-// Create the server and assign it to 'app'
-const app = http.createServer((req, res) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('Hello Holberton School!');
+const PORT = 1245;
+const HOST = 'localhost';
+const app = http.createServer();
+
+app.on('request', (_, res) => {
+  const responseText = 'Hello Holberton School!';
+
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Content-Length', responseText.length);
+  res.statusCode = 200;
+  res.write(Buffer.from(responseText));
 });
 
-// The server listens on port 1245
-app.listen(1245, () => {
-    console.log('Server is listening on port 1245');
+app.listen(PORT, HOST, () => {
+  process.stdout.write(`Server listening at -> http://${HOST}:${PORT}\n`);
 });
 
 module.exports = app;
