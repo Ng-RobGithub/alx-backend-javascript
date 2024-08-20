@@ -1,68 +1,93 @@
 const express = require('express');
 const fs = require('fs');
-const path = require('path');
 
 const app = express();
 const PORT = 1245;
+const DB_FILE = process.argv.length > 2 ? process.argv[2] : '';
 
-function countStudents(filepath) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(filepath, 'utf-8', (err, data) => {
+/**
+ * Counts the students in a CSV data file.
+ * @param {String} dataPath The path to the CSV data file.
+ * @author Ng-Rob Agomuonso <https://github.com/Ng-RobGithub>
+ */
+const countStudents = (dataPath) => new Promise((resolve, reject) => {
+  if (!dataPath) {
+    reject(new Error('Cannot load the database'));
+  }
+  if (dataPath) {
+    fs.readFile(dataPath, (err, data) => {
       if (err) {
         reject(new Error('Cannot load the database'));
-        return;
       }
+      if (data) {
+        const reportParts = [];
+        const fileLines = data.toString('utf-8').trim().split('\n');
+        const studentGroups = {};
+        const dbFieldNames = fileLines[0].split(',');
+        const studentPropNames = dbFieldNames.slice(0, dbFieldNames.length - 1);
 
-      const lines = data.trim().split('\n');
-      if (lines.length === 0) {
-        reject(new Error('No data in file'));
-        return;
-      }
-
-      const students = {};
-      let numberOfStudents = 0;
-
-      lines.slice(1).forEach((line) => {
-        if (line) {
-          numberOfStudents += 1;
-          const [firstname, , , field] = line.split(',');
-          if (!students[field]) {
-            students[field] = [];
+        for (const line of fileLines.slice(1)) {
+          const studentRecord = line.split(',');
+          const studentPropValues = studentRecord.slice(
+            0,
+            studentRecord.length - 1,
+          );
+          const field = studentRecord[studentRecord.length - 1];
+          if (!Object.keys(studentGroups).includes(field)) {
+            studentGroups[field] = [];
           }
-          students[field].push(firstname);
+          const studentEntries = studentPropNames.map((propName, idx) => [
+            propName,
+            studentPropValues[idx],
+          ]);
+          studentGroups[field].push(Object.fromEntries(studentEntries));
         }
-      });
 
-      let output = `Number of students: ${numberOfStudents}\n`;
-      for (const field in students) {
-        if (students.hasOwnProperty(field)) {
-          output += `Number of students in ${field}: ${students[field].length}. List: ${students[field].join(', ')}\n`;
+        const totalStudents = Object.values(studentGroups).reduce(
+          (pre, cur) => (pre || []).length + cur.length,
+        );
+        reportParts.push(`Number of students: ${totalStudents}`);
+        for (const [field, group] of Object.entries(studentGroups)) {
+          reportParts.push([
+            `Number of students in ${field}: ${group.length}.`,
+            'List:',
+            group.map((student) => student.firstname).join(', '),
+          ].join(' '));
         }
+        resolve(reportParts.join('\n'));
       }
-
-      resolve(output.trim());
     });
-  });
-}
+  }
+});
 
-app.get('/', (req, res) => {
+app.get('/', (_, res) => {
   res.send('Hello Holberton School!');
 });
 
-app.get('/students', (req, res) => {
-  const databaseFile = path.join(__dirname, process.argv[2]);
+app.get('/students', (_, res) => {
+  const responseParts = ['This is the list of our students'];
 
-  countStudents(databaseFile)
-    .then((result) => {
-      res.send(`This is the list of our students\n${result}`);
+  countStudents(DB_FILE)
+    .then((report) => {
+      responseParts.push(report);
+      const responseText = responseParts.join('\n');
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Length', responseText.length);
+      res.statusCode = 200;
+      res.write(Buffer.from(responseText));
     })
-    .catch((error) => {
-      res.send('This is the list of our students\nCannot load the database');
+    .catch((err) => {
+      responseParts.push(err instanceof Error ? err.message : err.toString());
+      const responseText = responseParts.join('\n');
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Length', responseText.length);
+      res.statusCode = 200;
+      res.write(Buffer.from(responseText));
     });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server listening on PORT ${PORT}`);
 });
 
 module.exports = app;
